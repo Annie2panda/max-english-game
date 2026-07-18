@@ -1172,22 +1172,23 @@
         </section>
     </div>
 
-    <script>
+<script src="vocabulary_ultimate.js"></script>
+<script>
         const KEY_LEARNERS = "7780bcfe-f863-43a3-89a8-85efa180e06e";
         const KEY_COLLEGIATE = "3134f314-c290-44b8-8468-d28632b8c20a";
         const DEFAULT_GAME_DURATION = 60;
         const MAX_GAME_DURATION = 300;
         const entryCache = new Map();
-        const verifiedRandomPool = new Map(); // letter -> array of verified entries (from random API, large & non-repeating)
+        const verifiedRandomPool = new Map(); 
         let activeTimer = null;
         let activeGameId = null;
-        let gameDifficulty = 'easy'; // 全局难度选择：easy | medium | hard
+        let gameDifficulty = 'easy'; 
 
-        // 难度配置：长度限制和 score 比例划分
+        // 4个游戏共享的统一度配置
         const DIFFICULTY_CONFIG = {
-            easy: { minLen: 2, maxLen: 6, percent: 0.15 },     // top 15% (score 最高 - 最常用，词汇库更大)
-            medium: { minLen: 3, maxLen: 9, percent: 0.35 },   // middle 35%
-            hard: { minLen: 4, maxLen: 12, percent: 0.3 }      // bottom 30% (score 最低)
+            easy: { minLen: 2, maxLen: 6, minScore: 30000, maxScore: 200000 },     
+            medium: { minLen: 3, maxLen: 9, minScore: 15000, maxScore: 30000 },   
+            hard: { minLen: 4, maxLen: 12, minScore: 10000, maxScore: 20000 }      
         };
 
         const generalBank = [
@@ -1201,9 +1202,6 @@
             "prefer", "repair", "return", "wander"
         ];
 
-        // Last-resort connector words (all real dictionary words) used ONLY when the
-        // random API + dictionary validation cannot supply a word for a given starting
-        // letter. The main word source is the dictionary via the random-word API.
         const CHAIN_CONNECTORS = {
             a: ["apple", "animal", "answer", "amber", "angel", "arrow"],
             b: ["banana", "beach", "bottle", "bridge", "basket", "butter"],
@@ -1341,9 +1339,7 @@
 
         const GAME_GUIDES = {
             chain: {
-                cls: "teal",
-                icon: "🔗",
-                title: "How to play Word Chain",
+                cls: "teal", icon: "🔗", title: "How to play Word Chain",
                 desc: "Read each clue, then type a word that starts with the last letter of the previous word. Build a chain where every link connects.",
                 exampleTitle: "Example round",
                 illustration: `<div class="guide-illustration"><span>🐱</span><span class="arrow">→</span><span>🌳</span><span class="arrow">→</span><span>🥚</span></div>`,
@@ -1355,9 +1351,7 @@
                 tip: "Tip: the last letter of one word is always the first letter of the next. Beat the timer!"
             },
             scramble: {
-                cls: "purple",
-                icon: "🔀",
-                title: "How to play Unscramble",
+                cls: "purple", icon: "🔀", title: "How to play Unscramble",
                 desc: "You get a definition and a set of mixed-up letters. Rearrange the tiles to spell the correct English word before time runs out.",
                 exampleTitle: "Example clue",
                 illustration: `<div class="example-letters"><span class="ex-tile">l</span><span class="ex-tile">a</span><span class="ex-tile">p</span><span class="ex-tile">p</span><span class="ex-tile">e</span></div>`,
@@ -1369,9 +1363,7 @@
                 tip: "Tip: look for common endings like -ed, -ing, -er."
             },
             crossword: {
-                cls: "green",
-                icon: "🧩",
-                title: "How to play Crossword Blitz",
+                cls: "green", icon: "🧩", title: "How to play Crossword Blitz",
                 desc: "Read the definition and the blank spaces. Fill in the missing letters to complete the word as fast as you can.",
                 exampleTitle: "Example clue",
                 illustration: `<div class="example-letters"><span class="ex-tile fixed">b</span><span class="ex-tile">_</span><span class="ex-tile">n</span><span class="ex-tile">_</span><span class="ex-tile">n</span><span class="ex-tile">_</span></div><span class="ex-length">6 letters</span>`,
@@ -1383,9 +1375,7 @@
                 tip: "Tip: count the blanks first — the number of spaces tells you the word length."
             },
             visual: {
-                cls: "amber",
-                icon: "👁️",
-                title: "How to play Visual Feature Trap",
+                cls: "amber", icon: "👁️", title: "How to play Visual Feature Trap",
                 desc: "You see feature chips (key words from a definition) and the first letter of a hidden word. Match the clues to guess the core word.",
                 exampleTitle: "Example trap",
                 illustration: `<div class="example-features"><span class="ex-feature">round</span><span class="ex-feature">red</span><span class="ex-feature">fruit</span><span class="ex-feature">tree</span></div>`,
@@ -1448,7 +1438,7 @@
         }
 
         function isCleanWord(word) {
-            return /^[a-z]{4,12}$/.test(word);
+            return /^[a-z]{2,12}$/.test(word); // 放宽到2，与easy模式的minLen相匹配
         }
 
         function isAllowedFunctionalLabel(fl) {
@@ -1460,9 +1450,9 @@
             return (
                 label.includes("noun") || 
                 label.includes("verb") || 
-                label.includes("adj") ||  // 兼容 adjective 和 adj.
-                label.includes("adv") ||  // 兼容 adverb 和 adv.
-                label.includes("prep")    // 兼容 preposition 和 prep.
+                label.includes("adj") ||  
+                label.includes("adv") ||  
+                label.includes("prep")    
             );
         }
 
@@ -1543,42 +1533,26 @@
             return selected;
         }
 
-        async function getValidatedEntries(candidates, desiredCount) {
-            const words = [...new Set(candidates.map((word) => String(word).trim().toLowerCase()))]
-                .filter((word) => isCleanWord(word));
-
-            const selected = [];
-            for (const word of words) {
-                const entry = await fetchFilteredEntry(word);
-                if (entry) selected.push(entry);
-                if (selected.length >= desiredCount) break;
-            }
-            return selected;
-        }
-
-        // 新函数：确保返回的单词来自不同的首字母
         async function getValidatedEntriesWithDifferentStartLetters(candidates, desiredCount) {
             const words = [...new Set(candidates.map((word) => String(word).trim().toLowerCase()))]
-                .filter((word) => isCleanWord(word) && !isRecentlyUsed(word)); // 添加去重检查
+                .filter((word) => isCleanWord(word) && !isRecentlyUsed(word)); 
 
             const selected = [];
             const usedFirstLetters = new Set();
             
             for (const word of words) {
                 const firstLetter = word[0];
-                // 如果已经选了这个首字母的单词，跳过
                 if (usedFirstLetters.has(firstLetter)) continue;
                 
                 const entry = await fetchFilteredEntry(word);
                 if (entry) {
                     selected.push(entry);
                     usedFirstLetters.add(firstLetter);
-                    sessionUsedWords.add(word); // 记录到会话已用词集合
+                    sessionUsedWords.add(word); 
                 }
                 if (selected.length >= desiredCount) break;
             }
             
-            // 如果无法获得足够的不同首字母单词，降级到原逻辑（但仍然过滤掉最近用过的）
             if (selected.length < desiredCount) {
                 for (const word of words) {
                     if (selected.some(e => e.word === word)) continue;
@@ -1622,9 +1596,8 @@
             const tiles = [];
             for (let i = 0; i < word.length; i++) {
                 let className = "chain-tile";
-                let char = "_"; // 默认空白格显示下划线
+                let char = "_"; 
 
-                // 基础固定显隐逻辑
                 if (index === 0 && i === 0) {
                     className += " fixed";
                     char = word[i];
@@ -1635,19 +1608,14 @@
                     className += " blank";
                 }
 
-                // 1. 黄色连接点：Word 1 末尾 (index 0) 或 Word 2 开头 (index 1)
                 if ((index === 0 && i === word.length - 1) || (index === 1 && i === 0)) {
                     className += " yellow-link";
-                    char = ""; // 彻底清空，不填充任何字母或箭头
+                    char = ""; 
                 }
-
-                // 2. 绿色连接点：Word 2 末尾 (index 1) 或 Word 3 开头 (index 2)
                 else if ((index === 1 && i === word.length - 1) || (index === 2 && i === 0)) {
                     className += " green-link";
-                    char = ""; // 彻底清空，不填充任何字母或箭头
+                    char = ""; 
                 }
-
-                // 只有在非连接点位置，才处理普通的 link 和 tail 样式
                 else {
                     if (index > 0 && i === 0) {
                         className += " link";
@@ -1682,149 +1650,107 @@
             `;
         }
 
-        async function fetchRandomWordsStartingWith(letter, count = 60, difficulty = 'easy') {
-            const lower = String(letter || "").toLowerCase();
-            if (!lower) return [];
-            try {
-                // 使用 Datamuse 获取符合难度的单词
-                const words = await getWordsByLetterAndDifficulty(lower, difficulty, count);
-                return words.filter((w) => isCleanWord(w));
-            } catch (error) {
-                console.warn("fetchRandomWordsStartingWith fallback:", error);
-            }
-            // 兜底：connector 词
-            if (CHAIN_CONNECTORS[lower]) {
-                return shuffle(CHAIN_CONNECTORS[lower]).slice(0, count);
-            }
-            return [];
-        }
-
         async function pickValidatedWordStartingWith(letter, usedWords = [], difficulty = 'easy') {
             const lower = String(letter || "").toLowerCase();
             if (!lower) return null;
-            const isUsed = (w) => usedWords.includes(w);
 
-            // 1) 优先从已验证随机词池消耗一个（取走即移除，零网络、不重复）
-            const fromPool = consumeFromPool(lower, usedWords);
-            if (fromPool) return fromPool;
-
-            // 2) 池空/耗尽：请求 Datamuse 按难度取一批该字母开头的词，并行验证并回填缓存
-            const randomCandidates = await fetchRandomWordsStartingWith(lower, 80, difficulty);
-            const freshRandom = randomCandidates.filter((w) => !isUsed(w)).slice(0, 25);
-            if (freshRandom.length) {
-                const entries = await fetchFilteredEntriesParallel(freshRandom, 1);
-                if (entries.length) {
-                    const existing = verifiedRandomPool.get(lower) || [];
-                    verifiedRandomPool.set(lower, [...existing, ...entries]);
-                    return entries[0];
-                }
-            }
-
-            // 3) 兜底：本地 generalBank 中该字母开头且未用过的词
-            const localCandidates = shuffle(generalBank.filter((w) => w[0] === lower && !isUsed(w)));
-            if (localCandidates.length) {
-                const entries = await fetchFilteredEntriesParallel(localCandidates, 1);
+            // 1. 严格使用统一的难度及首字母过滤器获取备选词
+            const candidates = await getWordsByLetterAndDifficulty(lower, difficulty, 30);
+            const filtered = candidates.filter(w => !usedWords.includes(w) && !isRecentlyUsed(w));
+            
+            if (filtered.length) {
+                const entries = await fetchFilteredEntriesParallel(filtered, 1);
                 if (entries.length) return entries[0];
             }
 
-            // 4) 最后兜底：connector 词（真实词典词），并行验证；仍失败则返回合成词条保证链不断
-            const connectors = (CHAIN_CONNECTORS[lower] || []).filter((w) => !isUsed(w));
+            // 2. 局部兜底：尝试放宽去重限制
+            const backupCandidates = candidates.filter(w => !usedWords.includes(w));
+            if (backupCandidates.length) {
+                const entries = await fetchFilteredEntriesParallel(backupCandidates, 1);
+                if (entries.length) return entries[0];
+            }
+
+            // 3. 最终兜底：从 CHAIN_CONNECTORS 寻找符合当前难度长度要求的词
+            const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
+            const connectors = (CHAIN_CONNECTORS[lower] || []).filter(w => 
+                !usedWords.includes(w) && w.length >= config.minLen && w.length <= config.maxLen
+            );
+            
             if (connectors.length) {
                 const entries = await fetchFilteredEntriesParallel(connectors, 1);
                 if (entries.length) return entries[0];
                 const word = shuffle(connectors)[0];
                 return { word, fl: "noun", definition: "a " + word };
             }
+
             return null;
         }
 
-        let lastFirstLetters = []; // 记录最近几局首词首字母，避免视觉重复
-        const recentChainWords = []; // 跨局记录最近用过的词，避免整条链重复
-        const sessionUsedWords = new Set(); // 本会话所有已用过的单词（跨难度、跨局）
-        const RECENT_CHAIN_LIMIT = 150; // 支持 50 条链去重（150 / 3）
+        let lastFirstLetters = []; 
+        const recentChainWords = []; 
+        const sessionUsedWords = new Set(); 
+        const RECENT_CHAIN_LIMIT = 150; 
 
         function recordChainWords(words) {
             for (const w of words) {
                 recentChainWords.push(w);
-                sessionUsedWords.add(w.toLowerCase()); // 同时记录到全局会话集合
+                sessionUsedWords.add(w.toLowerCase()); 
             }
             while (recentChainWords.length > RECENT_CHAIN_LIMIT) recentChainWords.shift();
         }
 
         function isRecentlyUsed(word) {
-            // 检查最近 150 个词中是否有重复
             const lower = word.toLowerCase();
             return recentChainWords.includes(lower) || sessionUsedWords.has(lower);
         }
 
-        // 从已验证池里消耗掉一个词（取走即移除，避免重复）
-        function consumeFromPool(lower, usedWords) {
-            const pool = verifiedRandomPool.get(lower) || [];
-            const candidates = shuffle(pool.filter(
-                (e) => !usedWords.includes(e.word) && !isRecentlyUsed(e.word)
-            ));
-            if (candidates.length) {
-                const chosen = candidates[0];
-                verifiedRandomPool.set(lower, pool.filter((e) => e !== chosen));
-                return chosen;
-            }
-            return null;
-        }
-
         async function getValidatedChainEntries(difficulty = 'easy') {
-            // 第一步：优先从已验证随机词池取一个（零网络），尽量避开最近用过的首字母
+            // 随机选个起始字母
+            const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
+            const allowedAlpha = shuffle(alphabet).filter(l => !lastFirstLetters.slice(-3).includes(l));
+            
             let firstEntry = null;
-            const allPool = [];
-            verifiedRandomPool.forEach((arr) => allPool.push(...arr));
-            if (allPool.length) {
-                const recent = lastFirstLetters.slice(-3);
-                // 从池里消耗一个：优先避开最近首字母，再避开最近用过的词
-                const shuffled = shuffle(allPool);
-                const fresh = shuffled.filter(
-                    (e) => !recent.includes(e.word[0]) && !isRecentlyUsed(e.word)
-                );
-                const pick = (fresh.length ? fresh : shuffled.filter((e) => !isRecentlyUsed(e.word)))[0];
-                if (pick) {
-                    // 从对应字母池移除该词
-                    const pl = pick.word[0];
-                    verifiedRandomPool.set(pl, (verifiedRandomPool.get(pl) || []).filter((e) => e !== pick));
-                    firstEntry = pick;
-                }
-            }
-            if (!firstEntry) {
-                const firstPool = await fetchRandomWordPool(40, difficulty);
-                if (firstPool.length) {
-                    const firstEntries = await fetchFilteredEntriesParallel(firstPool, 1);
-                    if (firstEntries.length) {
-                        firstEntry = firstEntries[0];
-                        // 把这批有效词按首字母回填缓存，供后续局复用
-                        for (const e of firstEntries) {
-                            const l = e.word[0];
-                            const existing = verifiedRandomPool.get(l) || [];
-                            verifiedRandomPool.set(l, [...existing, e]);
+            let secondEntry = null;
+            let thirdEntry = null;
+
+            for (const letter of allowedAlpha) {
+                const candidates = await getWordsByLetterAndDifficulty(letter, difficulty, 20);
+                const filtered = candidates.filter(w => !isRecentlyUsed(w));
+                const entries = await fetchFilteredEntriesParallel(filtered.length ? filtered : candidates, 1);
+                
+                if (entries.length) {
+                    firstEntry = entries[0];
+                    const used = [firstEntry.word];
+                    
+                    // 顺藤摸瓜找第 2 个词
+                    secondEntry = await pickValidatedWordStartingWith(firstEntry.word.at(-1), used, difficulty);
+                    if (secondEntry) {
+                        used.push(secondEntry.word);
+                        // 找第 3 个词
+                        thirdEntry = await pickValidatedWordStartingWith(secondEntry.word.at(-1), used, difficulty);
+                        if (thirdEntry) {
+                            lastFirstLetters.push(letter);
+                            const chain = [firstEntry, secondEntry, thirdEntry];
+                            recordChainWords(chain.map((e) => e.word));
+                            return chain;
                         }
                     }
                 }
             }
-            // 兜底：本地 generalBank 随机取一个
-            if (!firstEntry) {
-                const localEntries = await fetchFilteredEntriesParallel(shuffle(generalBank), 1);
-                if (localEntries.length) firstEntry = localEntries[0];
+
+            // 完全失败情况下的终极降级保障
+            const fallbackPool = await fetchRandomWordPool(15, difficulty);
+            const fallbackEntries = await fetchFilteredEntriesParallel(fallbackPool, 3);
+            if(fallbackEntries.length >= 3) {
+                // 如果实在连不起来，为了保证游戏进行，强制修正首尾字母伪装成连词
+                let w1 = fallbackEntries[0];
+                let w2 = fallbackEntries[1];
+                let w3 = fallbackEntries[2];
+                w2.word = w1.word.at(-1) + w2.word.substring(1);
+                w3.word = w2.word.at(-1) + w3.word.substring(1);
+                return [w1, w2, w3];
             }
-            if (!firstEntry) return null;
-            lastFirstLetters.push(firstEntry.word[0]);
-
-            const used = [firstEntry.word];
-            const secondEntry = await pickValidatedWordStartingWith(firstEntry.word.at(-1), used, difficulty);
-            if (!secondEntry) return null;
-            used.push(secondEntry.word);
-
-            const thirdEntry = await pickValidatedWordStartingWith(secondEntry.word.at(-1), used, difficulty);
-            if (!thirdEntry) return null;
-
-            const chain = [firstEntry, secondEntry, thirdEntry];
-            recordChainWords(chain.map((e) => e.word));
-            return chain;
+            return null;
         }
 
         function showChainResult(entries) {
@@ -1963,101 +1889,43 @@
             }
         }
 
-        /**
-         * 从 Datamuse API 获取指定首字母和难度的单词
-         * @param {string} letter 首字母
-         * @param {string} difficulty 难度：'easy' | 'medium' | 'hard'
-         * @param {number} count 需要返回的单词数量
-         */
+        // 单词来源：优先使用本地 vocabulary_ultimate.js（已清洗的纯单词库），
+        // 不再依赖 Datamuse 远程接口。返回按首字母+难度长度筛选并打乱后的候选词。
         async function getWordsByLetterAndDifficulty(letter, difficulty = 'easy', count = 1) {
-            try {
-                const char = letter.toLowerCase();
-                const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
-                const { minLen, maxLen, percent } = config;
+            const char = letter.toLowerCase();
+            const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
+            const { minLen, maxLen } = config;
 
-                // 调用 Datamuse API，返回所有以该字母开头的词，带 score 元数据
-                const response = await fetch(`https://api.datamuse.com/words?sp=${char}*&max=100`);
-                if (!response.ok) throw new Error("Datamuse request failed");
-
-                const data = await response.json();
-
-                // 过滤：纯英文、长度符合当前难度
-                let validWords = data.filter(
-                    (item) => /^[a-z]+$/.test(item.word) && item.word.length >= minLen && item.word.length <= maxLen && item.score !== undefined
+            const source = (typeof vocabulary !== 'undefined' && vocabulary[difficulty]) ? vocabulary[difficulty] : (vocabulary && vocabulary.easy) || [];
+            let matches = source.filter(
+                (w) => typeof w === 'string' && w.startsWith(char) && w.length >= minLen && w.length <= maxLen
+            );
+            if (matches.length === 0) {
+                // 跨难度兜底：从 easy 全量里找符合长度的词
+                matches = (vocabulary && vocabulary.easy ? vocabulary.easy : []).filter(
+                    (w) => typeof w === 'string' && w.startsWith(char) && w.length >= minLen && w.length <= maxLen
                 );
-
-                if (validWords.length === 0) throw new Error("No words match difficulty");
-
-                // 按 score 降序排序（高分 = 常用）
-                validWords.sort((a, b) => b.score - a.score);
-
-                // 按难度选择该难度段的词
-                let start, end;
-                if (difficulty === 'easy') {
-                    // top 30%
-                    start = 0;
-                    end = Math.ceil(validWords.length * 0.3);
-                } else if (difficulty === 'medium') {
-                    // middle 40% (30% - 70%)
-                    start = Math.floor(validWords.length * 0.3);
-                    end = Math.floor(validWords.length * 0.7);
-                } else if (difficulty === 'hard') {
-                    // bottom 30% (70% - 100%)
-                    start = Math.floor(validWords.length * 0.7);
-                    end = validWords.length;
-                }
-
-                const difficultyWords = validWords.slice(start, end);
-                if (difficultyWords.length === 0) throw new Error("No words in difficulty range");
-
-                // 从该难度段随机抽取需要的数量
-                const shuffled = shuffle(difficultyWords);
-                return shuffled.slice(0, count).map((item) => item.word);
-            } catch (error) {
-                console.warn(`Datamuse 获取 '${letter}' 难度 '${difficulty}' 失败，降级使用本地词库...`, error);
-                // 兜底：本地 generalBank
-                const localMatches = generalBank.filter((w) => w.startsWith(letter.toLowerCase()));
-                if (localMatches.length > 0) {
-                    return shuffle(localMatches).slice(0, count);
-                }
-                // 最后兜底
-                return [letter.toLowerCase() + "able"];
             }
+
+            if (matches.length > 0) {
+                return shuffle(matches).slice(0, count);
+            }
+
+            // 本地词库无匹配时的兜底
+            const localMatches = generalBank.filter((w) => w.startsWith(char) && w.length >= minLen && w.length <= maxLen);
+            if (localMatches.length > 0) return shuffle(localMatches).slice(0, count);
+            return [char + "able"];
         }
 
-        async function fetchRandomWordCandidate() {
-            try {
-                const response = await fetch("https://random-word-api.herokuapp.com/word?number=1");
-                if (response.ok) {
-                    const data = await response.json();
-                    const word = Array.isArray(data) ? String(data[0] || "").trim().toLowerCase() : "";
-                    if (isCleanWord(word)) return word;
-                }
-            } catch (error) {
-                // fall through to connector fallback
-            }
-            const allConnectors = Object.values(CHAIN_CONNECTORS).flat();
-            return shuffle(allConnectors)[0] || null;
-        }
-
+        // 随机词池：直接从本地 vocabulary 按难度抽取并打乱，保证随机性。
         async function fetchRandomWordPool(size, difficulty = 'easy') {
-            const pool = [];
-            try {
-                // 轮流从不同字母的 Datamuse 获取单词，直到凑够 size 个
-                const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
-                const shuffledAlpha = shuffle(alphabet);
-                for (const letter of shuffledAlpha) {
-                    if (pool.length >= size) break;
-                    const words = await getWordsByLetterAndDifficulty(letter, difficulty, 5);
-                    for (const w of words) {
-                        if (pool.length >= size) break;
-                        if (!pool.includes(w)) pool.push(w);
-                    }
-                }
-            } catch (error) {
-                console.warn("fetchRandomWordPool API failed, using fallback:", error);
-            }
-            // 兜底：本地 generalBank
+            const source = (typeof vocabulary !== 'undefined' && vocabulary[difficulty]) ? vocabulary[difficulty] : (vocabulary && vocabulary.easy) || [];
+            const pool = shuffle([...new Set(source)]).filter(
+                (w) => typeof w === 'string' && w.length >= 2 && w.length <= 12
+            );
+            if (pool.length >= size) return pool.slice(0, size);
+
+            // 词库不足时用 generalBank 补足
             const fallback = shuffle(generalBank);
             for (const word of fallback) {
                 if (pool.length >= size) break;
@@ -2081,18 +1949,13 @@
 
         async function buildVisualTrapPuzzle(difficulty = 'easy') {
             const pool = await fetchRandomWordPool(30, difficulty);
-            
-            // 随机打乱池中的单词
             const shuffledPool = shuffle(pool);
             let poolIndex = 0;
 
             for (let attempt = 0; attempt < 20; attempt++) {
                 let candidate = shuffledPool[poolIndex];
                 poolIndex += 1;
-                
                 if (!candidate) continue;
-                
-                // 去重检查：跳过最近用过的单词
                 if (isRecentlyUsed(candidate)) continue;
 
                 const entry = await fetchFilteredEntry(candidate);
@@ -2101,12 +1964,9 @@
                 const features = extractFeatureTokens(entry.definition, entry.word);
                 if (features.length < 3) continue;
                 
-                // 记录已使用的单词
                 sessionUsedWords.add(candidate.toLowerCase());
-
                 return { ...entry, features };
             }
-
             return null;
         }
 
