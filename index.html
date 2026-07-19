@@ -1494,23 +1494,8 @@
                     const response = await fetch(url, { signal: controller.signal });
                     if (!response.ok) continue;
                     const data = await response.json();
-                    if (
-                        data[0] &&
-                        typeof data[0] === "object" &&
-                        data[0].fl &&
-                        isAllowedFunctionalLabel(data[0].fl)
-                    ) {
-                        const firstWord = extractWordFromEntry(data[0]);
-                        const firstDefinition = sanitizeDefinition(data[0]?.shortdef?.[0]);
-                        if (isCleanWord(firstWord) && firstDefinition) {
-                            result = {
-                                word: firstWord,
-                                fl: String(data[0].fl).toLowerCase(),
-                                definition: firstDefinition
-                            };
-                        }
-                    }
-                    if (result) break;
+                    
+                    // 修复核心：直接走全数组遍历验证，确保拿到的 fl 和 definition 属于同一个对象，不会产生错位
                     result = findFirstValidEntry(data);
                     if (result) break;
                 } catch (error) {
