@@ -54,8 +54,6 @@
         .container {
             width: 100%;
             max-width: 980px;
-            height: 95vh;
-            min-height: 95vh;
             margin: 0 auto;
             background: var(--shell);
             border: 1px solid var(--line);
@@ -64,14 +62,21 @@
             display: flex;
             flex-direction: column;
             padding: 14px;
+
+            /* ======= 核心修改：取消固定高度限制 ======= */
+            height: auto !important;       /* 允许随内容自动撑开高度 */
+            min-height: unset !important;  /* 解除原本写死的 95vh 限制 */
         }
 
         .view-panel {
             display: none;
             width: 100%;
-            flex: 1;
-            min-height: 0;
             flex-direction: column;
+
+            /* ======= 核心修改：取消强行拉伸 ======= */
+            flex: none !important;         /* 拒绝父级的拉伸分配，不再强行占满剩余空间 */
+            height: auto !important;       /* 高度完全由内部的 Clue 卡片决定 */
+            min-height: unset !important;  /* 解除 min-height: 0 的限制 */
         }
 
         .view-panel.active {
@@ -269,28 +274,27 @@
             margin-left: auto;
         }
 
+        /* 1. 调整游戏区主包裹容器，彻底取消固定高度 */
         .arena-wrapper {
-            flex: 1;
-            min-height: 0;
-            display: flex;
-            flex-direction: column;
-            background: var(--arena);
-            border: 1px solid #d8cebc;
-            border-radius: 16px;
-            padding: 10px;
-            overflow: hidden;
-            position: relative;
+            height: auto !important;
+            min-height: unset !important;
+            max-height: none !important;
+            margin-bottom: 10px; /* 让它和底部的 Answer Key 保持一个好看的固定间距 */
+   
         }
 
+        /* 2. 调整承载 3 个 CLUE 卡片的内部容器 */
         .arena-inner {
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
+            height: auto !important;
+            max-height: none !important;
+            overflow-y: visible !important; /* 彻底不需要滚动条，自适应展开 */
+            
             display: flex;
             flex-direction: column;
-            gap: 8px;
-            padding-right: 4px;
+            gap: 16px; /* 保持 Clue 卡片之间有整洁的固定间距 */
         }
+
+        
 
         .arena-inner::-webkit-scrollbar {
             width: 8px;
