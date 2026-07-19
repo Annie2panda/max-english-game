@@ -446,17 +446,11 @@
         .chain-tile.yellow-link {
             background-color: #fff3df !important;
             border: 1px solid #c5a16f !important;
-     
-            
-            
         }
 
         .chain-tile.green-link {
             background-color: #e7f6ed !important;
             border: 1px solid #6aa585 !important;
-            
-            
-            
         }
 
         .chain-answer-inline {
@@ -897,25 +891,44 @@
         }
 
         @media (max-width: 900px) {
-            html,
-            body {
+            html, body {
                 height: auto;
                 min-height: 100%;
                 overflow-y: auto;
-                overflow-x: hidden;
-                -webkit-overflow-scrolling: touch;
             }
 
-            body {
-                align-items: flex-start;
-                padding: 8px;
-            }
-
+            /* --- 精确调整游戏区容器 --- */
             .container {
-                height: calc(100vh - 16px);
-                min-height: calc(100vh - 16px);
-                padding: 12px;
-                border-radius: 16px;
+                height: auto !important;     /* 取消一屏固定高度限制 */
+                max-height: none !important; /* 允许随内容无限向下延伸 */
+                min-height: auto;
+                display: block;              /* 改变弹性布局为块级布局，让内容自然平铺 */
+            }
+
+            .view-panel {
+                height: auto;
+                display: none;
+            }
+
+            .view-panel.active {
+                display: block;              /* 激活时随内容自然撑开 */
+            }
+
+            .arena-wrapper {
+                height: auto;
+                min-height: 100px;           /* 设定基础保底高度 */
+                display: block;
+                margin-bottom: 12px;         /* 替代原有的 flex 间距，让答案区产生自然间距 */
+            }
+            
+            .arena-inner {
+                height: auto;
+                overflow-y: visible !important; /* 彻底禁用内部滚动条，内容多长就撑开多长 */
+            }
+
+            .key-box {
+                height: auto;
+                margin-top: 0;
             }
 
             .menu-grid {
@@ -927,19 +940,9 @@
                 align-content: start;
             }
 
-            .view-panel {
-                flex: 1;
-                min-height: 0;
-            }
-
             .setup-section {
                 gap: 6px;
                 padding: 6px 8px;
-            }
-
-            .arena-wrapper {
-                flex: 1;
-                min-height: 0;
             }
 
             /* 手机端：返回按钮与标题同一行，设置区横向流式（最多折 2 行） */
@@ -1233,13 +1236,15 @@
 
         const visualStopWords = new Set([
             "a", "an", "any", "and", "are", "as", "at", "be", "been", "being", "by", "for", "from", "in", "into",
-            "is", "it", "its", "of", "on", "or", "that", "the", "their", "there", "these", "they", "this",
+            "is", "it", "its", "of", "on", "or", "that", "the", "their", "there", "these", "they", "this", "having", "telling", "many", "much", "more", "most", 
+            "some", "such", "another", "then", "therefore", "though", "throughout", "etc", "you", "however", 
+            "furthermore", "meanwhile", "nevertheless", "nonetheless", "otherwise", "similarly",
             "to", "used", "using", "with", "without", "someone", "something", "person", "people", "thing",
             "things", "several", "place", "kind", "type", "group", "form", "part", "made", "make", "makes", "making",
             "more", "most", "less", "than", "very", "often", "usually", "especially", "sometimes", "such",
             "can", "could", "would", "should", "has", "have", "had", "was", "were", "which", "when", "where",
             "one", "two", "too", "three", "try", "about", "way", "also", "after", "before", "over", "under", "between", "among", "through", "during",
-            "who", "whom", "whose", "your", "yours", "our", "ours", "his", "her", "hers", "them", "then"
+            "who", "what", "whom", "whose", "your", "yours", "our", "ours", "his", "her", "hers", "them", "then"
         ]);
 
         function shuffle(list) {
@@ -1438,7 +1443,7 @@
         }
 
         function isCleanWord(word) {
-            return /^[a-z]{2,12}$/.test(word); // 放宽到2，与easy模式的minLen相匹配
+            return /^[a-z]{2,12}$/.test(word); 
         }
 
         function isAllowedFunctionalLabel(fl) {
@@ -1519,15 +1524,19 @@
             return result;
         }
 
+        /* 核心修复点 1：把原本无视长度、直接使用 Promise.all 并发请求全部单词的漏洞，
+           改造成优雅的严格串行查词逻辑。只要获取到了期望的有效词，立刻中断，绝不产生无用多余请求！*/
         async function fetchFilteredEntriesParallel(words, desiredCount) {
             const clean = [...new Set(words.map((w) => String(w).trim().toLowerCase()))]
                 .filter((w) => isCleanWord(w));
-            const results = await Promise.all(clean.map((w) => fetchFilteredEntry(w)));
+            
             const selected = [];
-            for (const entry of results) {
+            // 使用串行 for 循环替代 Promise.all，有效避免高并发网络轰炸
+            for (const word of clean) {
+                const entry = await fetchFilteredEntry(word);
                 if (entry) {
                     selected.push(entry);
-                    if (selected.length >= desiredCount) break;
+                    if (selected.length >= desiredCount) break; // 查够了立马熔断，后面不再发包
                 }
             }
             return selected;
@@ -1650,12 +1659,14 @@
             `;
         }
 
+        /* 核心修复点 2：限制单次寻词时的候选词规模，不再一口气抽 30 个去碰运气。
+           结合 fetchFilteredEntriesParallel 的串行改造，实现“最少只请求 1 次 API”的精准命中。*/
         async function pickValidatedWordStartingWith(letter, usedWords = [], difficulty = 'easy') {
             const lower = String(letter || "").toLowerCase();
             if (!lower) return null;
 
-            // 1. 严格使用统一的难度及首字母过滤器获取备选词
-            const candidates = await getWordsByLetterAndDifficulty(lower, difficulty, 30);
+            // 缩减单次验证备选词数，从 30 缩减至更合理的 6 个
+            const candidates = await getWordsByLetterAndDifficulty(lower, difficulty, 6);
             const filtered = candidates.filter(w => !usedWords.includes(w) && !isRecentlyUsed(w));
             
             if (filtered.length) {
@@ -1663,14 +1674,12 @@
                 if (entries.length) return entries[0];
             }
 
-            // 2. 局部兜底：尝试放宽去重限制
             const backupCandidates = candidates.filter(w => !usedWords.includes(w));
             if (backupCandidates.length) {
                 const entries = await fetchFilteredEntriesParallel(backupCandidates, 1);
                 if (entries.length) return entries[0];
             }
 
-            // 3. 最终兜底：从 CHAIN_CONNECTORS 寻找符合当前难度长度要求的词
             const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
             const connectors = (CHAIN_CONNECTORS[lower] || []).filter(w => 
                 !usedWords.includes(w) && w.length >= config.minLen && w.length <= config.maxLen
@@ -1704,17 +1713,22 @@
             return recentChainWords.includes(lower) || sessionUsedWords.has(lower);
         }
 
+        /* 核心修复点 3：限制链条生成的最大试错大循环次数（熔断机制），防止接口因网络断链或生僻字陷入无限盲目重试。*/
         async function getValidatedChainEntries(difficulty = 'easy') {
-            // 随机选个起始字母
             const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
             const allowedAlpha = shuffle(alphabet).filter(l => !lastFirstLetters.slice(-3).includes(l));
             
             let firstEntry = null;
             let secondEntry = null;
             let thirdEntry = null;
+            let attemptLoopCount = 0; // 大循环试错限额计数器
 
             for (const letter of allowedAlpha) {
-                const candidates = await getWordsByLetterAndDifficulty(letter, difficulty, 20);
+                attemptLoopCount++;
+                if (attemptLoopCount > 6) break; // 熔断：如果连续换了 6 个首字母都因为网络或字典定义问题断链，直接切入安全兜底，绝不死循环刷 API
+
+                // 每次大循环起始词验证，精简捞词量
+                const candidates = await getWordsByLetterAndDifficulty(letter, difficulty, 5);
                 const filtered = candidates.filter(w => !isRecentlyUsed(w));
                 const entries = await fetchFilteredEntriesParallel(filtered.length ? filtered : candidates, 1);
                 
@@ -1722,11 +1736,9 @@
                     firstEntry = entries[0];
                     const used = [firstEntry.word];
                     
-                    // 顺藤摸瓜找第 2 个词
                     secondEntry = await pickValidatedWordStartingWith(firstEntry.word.at(-1), used, difficulty);
                     if (secondEntry) {
                         used.push(secondEntry.word);
-                        // 找第 3 个词
                         thirdEntry = await pickValidatedWordStartingWith(secondEntry.word.at(-1), used, difficulty);
                         if (thirdEntry) {
                             lastFirstLetters.push(letter);
@@ -1738,11 +1750,10 @@
                 }
             }
 
-            // 完全失败情况下的终极降级保障
+            // 终极降级安全保障：如果触发了上述熔断，或者字典网络彻底不通
             const fallbackPool = await fetchRandomWordPool(15, difficulty);
             const fallbackEntries = await fetchFilteredEntriesParallel(fallbackPool, 3);
             if(fallbackEntries.length >= 3) {
-                // 如果实在连不起来，为了保证游戏进行，强制修正首尾字母伪装成连词
                 let w1 = fallbackEntries[0];
                 let w2 = fallbackEntries[1];
                 let w3 = fallbackEntries[2];
@@ -1889,8 +1900,6 @@
             }
         }
 
-        // 单词来源：优先使用本地 vocabulary_ultimate.js（已清洗的纯单词库），
-        // 不再依赖 Datamuse 远程接口。返回按首字母+难度长度筛选并打乱后的候选词。
         async function getWordsByLetterAndDifficulty(letter, difficulty = 'easy', count = 1) {
             const char = letter.toLowerCase();
             const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
@@ -1901,7 +1910,6 @@
                 (w) => typeof w === 'string' && w.startsWith(char) && w.length >= minLen && w.length <= maxLen
             );
             if (matches.length === 0) {
-                // 跨难度兜底：从 easy 全量里找符合长度的词
                 matches = (vocabulary && vocabulary.easy ? vocabulary.easy : []).filter(
                     (w) => typeof w === 'string' && w.startsWith(char) && w.length >= minLen && w.length <= maxLen
                 );
@@ -1911,13 +1919,11 @@
                 return shuffle(matches).slice(0, count);
             }
 
-            // 本地词库无匹配时的兜底
             const localMatches = generalBank.filter((w) => w.startsWith(char) && w.length >= minLen && w.length <= maxLen);
             if (localMatches.length > 0) return shuffle(localMatches).slice(0, count);
             return [char + "able"];
         }
 
-        // 随机词池：直接从本地 vocabulary 按难度抽取并打乱，保证随机性。
         async function fetchRandomWordPool(size, difficulty = 'easy') {
             const source = (typeof vocabulary !== 'undefined' && vocabulary[difficulty]) ? vocabulary[difficulty] : (vocabulary && vocabulary.easy) || [];
             const pool = shuffle([...new Set(source)]).filter(
@@ -1925,7 +1931,6 @@
             );
             if (pool.length >= size) return pool.slice(0, size);
 
-            // 词库不足时用 generalBank 补足
             const fallback = shuffle(generalBank);
             for (const word of fallback) {
                 if (pool.length >= size) break;
