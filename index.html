@@ -1256,21 +1256,69 @@
         }
 
         function switchView(panelId) {
-            clearActiveTimer();
+            window.scrollTo({ top: 0, behavior: 'instant' }); 
+            
             document.querySelectorAll(".view-panel").forEach((panel) => panel.classList.remove("active"));
             document.getElementById(panelId).classList.add("active");
+            
             const guideMap = {
                 "view-chain": "chain",
                 "view-scramble": "scramble",
                 "view-crossword": "crossword",
                 "view-visual": "visual"
             };
-            if (guideMap[panelId]) renderGuide(guideMap[panelId]);
+            
+            const currentGame = guideMap[panelId];
+            if (currentGame) {
+                renderGuide(currentGame);
+                hideAnswerBox(currentGame);
+                setStatus(currentGame, "Ready");
+                
+                // 🌟 核心修改：切换进入游戏时，将 Time Up! 还原为输入框的初始秒数
+                const timeInput = document.getElementById(`time-${currentGame}`);
+                const userDuration = timeInput ? timeInput.value : 30;
+                const timerEl = document.getElementById(`timer-${currentGame}`);
+                if (timerEl) {
+                    timerEl.textContent = `${userDuration}s`;
+                    timerEl.classList.remove("danger");
+                }
+
+                const arena = document.querySelector(`.arena-${currentGame}`);
+                if (arena) arena.innerHTML = '';
+                
+                const oldChainAnswer = document.querySelector(".chain-answer-inline");
+                if (oldChainAnswer) oldChainAnswer.remove();
+            }
         }
 
         function goHome() {
-            clearActiveTimer();
             activeGameId = null;
+
+            // 🌟 核心修改：遍历4个游戏，清理答案区和盘面的同时，恢复倒计时显示为输入框的值
+            ["chain", "scramble", "crossword", "visual"].forEach(id => {
+                hideAnswerBox(id); // 隐藏普通答案盒
+                setStatus(id, "Ready"); // 重置状态字样
+                
+                // 1. 获取用户在当前游戏输入框里设置的时间（如果获取不到则默认 30）
+                const timeInput = document.getElementById(`time-${id}`);
+                const userDuration = timeInput ? timeInput.value : 30;
+                
+                // 2. 将倒计时显示区域（如 Time Up!）还原为用户输入的数值（例如 "3s"）
+                const timerEl = document.getElementById(`timer-${id}`);
+                if (timerEl) {
+                    timerEl.textContent = `${userDuration}s`;
+                    timerEl.classList.remove("danger"); // 移除可能存在的红色警告样式
+                }
+
+                // 3. 清空游戏核心盘面，防止下次进来先看到旧题目
+                const arena = document.querySelector(`.arena-${id}`);
+                if (arena) arena.innerHTML = ''; 
+            });
+            
+            // 特别清理接龙的内联答案组件
+            const oldChainAnswer = document.querySelector(".chain-answer-inline");
+            if (oldChainAnswer) oldChainAnswer.remove();
+
             switchView("view-hub");
         }
 
