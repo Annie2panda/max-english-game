@@ -62,21 +62,17 @@
             display: flex;
             flex-direction: column;
             padding: 14px;
-
-            /* ======= 核心修改：取消固定高度限制 ======= */
-            height: auto !important;       /* 允许随内容自动撑开高度 */
-            min-height: unset !important;  /* 解除原本写死的 95vh 限制 */
+            height: auto !important;       
+            min-height: unset !important;  
         }
 
         .view-panel {
             display: none;
             width: 100%;
             flex-direction: column;
-
-            /* ======= 核心修改：取消强行拉伸 ======= */
-            flex: none !important;         /* 拒绝父级的拉伸分配，不再强行占满剩余空间 */
-            height: auto !important;       /* 高度完全由内部的 Clue 卡片决定 */
-            min-height: unset !important;  /* 解除 min-height: 0 的限制 */
+            flex: none !important;         
+            height: auto !important;       
+            min-height: unset !important;  
         }
 
         .view-panel.active {
@@ -274,35 +270,20 @@
             margin-left: auto;
         }
 
-        /* 1. 调整游戏区主包裹容器，彻底取消固定高度 */
         .arena-wrapper {
             height: auto !important;
             min-height: unset !important;
             max-height: none !important;
-            margin-bottom: 10px; /* 让它和底部的 Answer Key 保持一个好看的固定间距 */
-   
+            margin-bottom: 10px; 
         }
 
-        /* 2. 调整承载 3 个 CLUE 卡片的内部容器 */
         .arena-inner {
             height: auto !important;
             max-height: none !important;
-            overflow-y: visible !important; /* 彻底不需要滚动条，自适应展开 */
-            
+            overflow-y: visible !important; 
             display: flex;
             flex-direction: column;
-            gap: 16px; /* 保持 Clue 卡片之间有整洁的固定间距 */
-        }
-
-        
-
-        .arena-inner::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .arena-inner::-webkit-scrollbar-thumb {
-            background: #d6ccbb;
-            border-radius: 999px;
+            gap: 16px; 
         }
 
         .empty-state {
@@ -315,6 +296,20 @@
             font-size: 0.95rem;
             line-height: 1.5;
             padding: 18px;
+        }
+
+        .read-only-display,
+        .clue-item,
+        .letter-bank,
+        .chain-tile,
+        .visual-letter,
+        .feature-chip,
+        .guide-box,
+        .key-box {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            cursor: default !important;
         }
 
         .clue-item {
@@ -433,7 +428,6 @@
             color: #35526f;
         }
 
-        /* 连接点高亮样式 */
         .chain-tile.link {
             background: #ececec;
             border-color: #d4d4d4;
@@ -455,19 +449,6 @@
         .chain-tile.green-link {
             background-color: #e7f6ed !important;
             border: 1px solid #6aa585 !important;
-        }
-
-        .chain-answer-inline {
-            background: var(--panel);
-            border: 1px solid #bfd9d4;
-            border-left: 4px solid var(--teal);
-            border-radius: 10px;
-            padding: 8px 10px;
-            color: var(--text);
-            font-size: 1rem;
-            font-weight: 800;
-            line-height: 1.4;
-            text-align: center;
         }
 
         .key-box {
@@ -639,7 +620,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Guide Box Styles */
         .guide-box {
             background: var(--panel);
             border: 1px solid var(--line);
@@ -698,30 +678,6 @@
             letter-spacing: 0.02em;
         }
 
-        .example-card {
-            background: var(--panel);
-            border: 1px solid var(--line);
-            border-radius: 10px;
-            padding: 10px 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .example-meta {
-            font-size: 0.74rem;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-
-        .example-clue-text {
-            color: #4f5f71;
-            font-size: 0.84rem;
-            line-height: 1.35;
-        }
-
         .example-letters {
             display: flex;
             flex-wrap: wrap;
@@ -752,13 +708,6 @@
             color: #7a5417;
         }
 
-        .ex-length {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--muted);
-            margin-left: 4px;
-        }
-
         .guide-illustration {
             display: flex;
             align-items: center;
@@ -771,20 +720,6 @@
             font-size: 1rem;
             color: var(--muted);
         }
-
-        .example-solution {
-            margin-top: 6px;
-            padding: 6px 10px;
-            border-radius: 6px;
-            font-size: 0.84rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .example-solution.green { background: var(--green-soft); color: var(--green); }
-        .example-solution.purple { background: var(--purple-soft); color: var(--purple); }
-        .example-solution.amber { background: var(--amber-soft); color: var(--amber); }
 
         .guide-tips {
             font-size: 0.82rem;
@@ -801,7 +736,6 @@
             color: #7a5417;
         }
 
-        /* Word Chain Flow styling */
         .chain-flow {
             display: flex;
             flex-direction: column;
@@ -841,42 +775,6 @@
             color: var(--green);
         }
 
-        .chain-arrow {
-            font-size: 0.74rem;
-            font-weight: 700;
-            color: var(--muted);
-            padding-left: 14px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .link-label {
-            font-size: 0.72rem;
-        }
-
-        .link-label.yellow { color: var(--amber); }
-        .link-label.green { color: var(--green); }
-
-        .highlight-link-y {
-            background-color: #fff3df;
-            border: 1px solid #c5a16f;
-            border-radius: 3px;
-            padding: 0 3px;
-            font-family: monospace;
-            font-weight: bold;
-        }
-
-        .highlight-link-g {
-            background-color: #e7f6ed;
-            border: 1px solid #6aa585;
-            border-radius: 3px;
-            padding: 0 3px;
-            font-family: monospace;
-            font-weight: bold;
-        }
-
-        /* Features style for Guide */
         .example-features {
             display: flex;
             flex-wrap: wrap;
@@ -894,6 +792,17 @@
             color: #7a5417;
         }
 
+        .no-answer-guide-notice {
+            padding: 2px 4px;
+            color: var(--muted);
+            font-size: 0.88rem;
+            line-height: 1.4;
+            text-align: center;
+            user-select: none;
+            cursor: default;
+            box-sizing: border-box;
+        }
+
         @media (max-width: 900px) {
             html, body {
                 height: auto;
@@ -901,12 +810,11 @@
                 overflow-y: auto;
             }
 
-            /* --- 精确调整游戏区容器 --- */
             .container {
-                height: auto !important;     /* 取消一屏固定高度限制 */
-                max-height: none !important; /* 允许随内容无限向下延伸 */
+                height: auto !important;     
+                max-height: none !important; 
                 min-height: auto;
-                display: block;              /* 改变弹性布局为块级布局，让内容自然平铺 */
+                display: block;              
             }
 
             .view-panel {
@@ -915,19 +823,19 @@
             }
 
             .view-panel.active {
-                display: block;              /* 激活时随内容自然撑开 */
+                display: block;              
             }
 
             .arena-wrapper {
                 height: auto;
-                min-height: 100px;           /* 设定基础保底高度 */
+                min-height: 100px;           
                 display: block;
-                margin-bottom: 12px;         /* 替代原有的 flex 间距，让答案区产生自然间距 */
+                margin-bottom: 12px;         
             }
             
             .arena-inner {
                 height: auto;
-                overflow-y: visible !important; /* 彻底禁用内部滚动条，内容多长就撑开多长 */
+                overflow-y: visible !important; 
             }
 
             .key-box {
@@ -947,16 +855,12 @@
             .setup-section {
                 gap: 6px;
                 padding: 6px 8px;
-            }
-
-            /* 手机端：返回按钮与标题同一行，设置区横向流式（最多折 2 行） */
-            .header-zone .subtitle { display: none; }
-
-            .setup-section {
                 flex-direction: row;
                 flex-wrap: wrap;
                 align-items: center;
             }
+
+            .header-zone .subtitle { display: none; }
 
             .back-btn {
                 width: auto;
@@ -1046,7 +950,7 @@
 
             <div class="setup-section">
                 <span class="time-label">Time</span>
-                <input id="time-chain" class="time-input" type="number" value="60" min="1" max="300">
+                <input id="time-chain" class="time-input" type="number" value="180" min="1" max="300">
                 <span class="time-label">Difficulty</span>
                 <select id="difficulty-chain" class="difficulty-select">
                     <option value="easy">Easy</option>
@@ -1054,7 +958,7 @@
                     <option value="hard">Hard</option>
                 </select>
                 <button id="btn-chain" class="action-btn" style="background: var(--teal);" onclick="startChainGame()">▶ Start Game</button>
-                <div class="timer-badge" id="timer-chain">60s</div>
+                <div class="timer-badge" id="timer-chain">180s</div>
             </div>
 
             <div class="arena-wrapper">
@@ -1066,6 +970,9 @@
                     <div class="empty-state" data-guide="chain">Press Start Game to load 3 clean clues.</div>
                 </div>
             </div>
+
+            <!-- 补充 chain 游戏的 key-box 容器 -->
+            <div class="key-box" id="answer-chain"></div>
         </section>
 
         <section id="view-scramble" class="view-panel">
@@ -1079,7 +986,7 @@
 
             <div class="setup-section">
                 <span class="time-label">Time</span>
-                <input id="time-scramble" class="time-input" type="number" value="60" min="1" max="300">
+                <input id="time-scramble" class="time-input" type="number" value="180" min="1" max="300">
                 <span class="time-label">Difficulty</span>
                 <select id="difficulty-scramble" class="difficulty-select">
                     <option value="easy">Easy</option>
@@ -1087,7 +994,7 @@
                     <option value="hard">Hard</option>
                 </select>
                 <button id="btn-scramble" class="action-btn" style="background: var(--purple);" onclick="startScrambleGame()">▶ Start Game</button>
-                <div class="timer-badge" id="timer-scramble">60s</div>
+                <div class="timer-badge" id="timer-scramble">180s</div>
             </div>
 
             <div class="arena-wrapper">
@@ -1114,7 +1021,7 @@
 
             <div class="setup-section">
                 <span class="time-label">Time</span>
-                <input id="time-crossword" class="time-input" type="number" value="60" min="1" max="300">
+                <input id="time-crossword" class="time-input" type="number" value="180" min="1" max="300">
                 <span class="time-label">Difficulty</span>
                 <select id="difficulty-crossword" class="difficulty-select">
                     <option value="easy">Easy</option>
@@ -1122,7 +1029,7 @@
                     <option value="hard">Hard</option>
                 </select>
                 <button id="btn-crossword" class="action-btn" style="background: var(--green);" onclick="startCrosswordGame()">▶ Start Game</button>
-                <div class="timer-badge" id="timer-crossword">60s</div>
+                <div class="timer-badge" id="timer-crossword">180s</div>
             </div>
 
             <div class="arena-wrapper">
@@ -1149,7 +1056,7 @@
 
             <div class="setup-section">
                 <span class="time-label">Time</span>
-                <input id="time-visual" class="time-input" type="number" value="60" min="1" max="300">
+                <input id="time-visual" class="time-input" type="number" value="180" min="1" max="300">
                 <span class="time-label">Difficulty</span>
                 <select id="difficulty-visual" class="difficulty-select">
                     <option value="easy">Easy</option>
@@ -1157,7 +1064,7 @@
                     <option value="hard">Hard</option>
                 </select>
                 <button id="btn-visual" class="action-btn" style="background: var(--amber);" onclick="startVisualGame()">▶ Start Game</button>
-                <div class="timer-badge" id="timer-visual">60s</div>
+                <div class="timer-badge" id="timer-visual">180s</div>
             </div>
 
             <div class="arena-wrapper">
@@ -1178,7 +1085,7 @@
 <script>
         const KEY_LEARNERS = "7780bcfe-f863-43a3-89a8-85efa180e06e";
         const KEY_COLLEGIATE = "3134f314-c290-44b8-8468-d28632b8c20a";
-        const DEFAULT_GAME_DURATION = 60;
+        const DEFAULT_GAME_DURATION = 180;
         const MAX_GAME_DURATION = 300;
         const entryCache = new Map();
         const verifiedRandomPool = new Map(); 
@@ -1186,12 +1093,13 @@
         let activeGameId = null;
         let gameDifficulty = 'easy'; 
 
-        // 4个游戏共享的统一度配置
         const DIFFICULTY_CONFIG = {
-            easy: { minLen: 2, maxLen: 6, minScore: 30000, maxScore: 200000 },     
-            medium: { minLen: 3, maxLen: 9, minScore: 15000, maxScore: 30000 },   
-            hard: { minLen: 4, maxLen: 12, minScore: 10000, maxScore: 20000 }      
+            easy: { minLen: 2, maxLen: 5, minScore: 30000, maxScore: 200000 },     
+            medium: { minLen: 5, maxLen: 8, minScore: 15000, maxScore: 30000 },   
+            hard: { minLen: 7, maxLen: 12, minScore: 10000, maxScore: 20000 }      
         };
+
+        const DEFAULT_NO_ANSWER_GUIDE = "The area above is for viewing questions only. Write your answers on paper (no input required here).";
 
         const generalBank = [
             "apple", "banana", "beach", "bottle", "camera", "candle", "doctor", "drawer", "forest",
@@ -1274,9 +1182,8 @@
                 hideAnswerBox(currentGame);
                 setStatus(currentGame, "Ready");
                 
-                // 🌟 核心修改：切换进入游戏时，将 Time Up! 还原为输入框的初始秒数
                 const timeInput = document.getElementById(`time-${currentGame}`);
-                const userDuration = timeInput ? timeInput.value : 30;
+                const userDuration = timeInput ? timeInput.value : 180;
                 const timerEl = document.getElementById(`timer-${currentGame}`);
                 if (timerEl) {
                     timerEl.textContent = `${userDuration}s`;
@@ -1285,39 +1192,28 @@
 
                 const arena = document.querySelector(`.arena-${currentGame}`);
                 if (arena) arena.innerHTML = '';
-                
-                const oldChainAnswer = document.querySelector(".chain-answer-inline");
-                if (oldChainAnswer) oldChainAnswer.remove();
             }
         }
 
         function goHome() {
             activeGameId = null;
 
-            // 🌟 核心修改：遍历4个游戏，清理答案区和盘面的同时，恢复倒计时显示为输入框的值
             ["chain", "scramble", "crossword", "visual"].forEach(id => {
-                hideAnswerBox(id); // 隐藏普通答案盒
-                setStatus(id, "Ready"); // 重置状态字样
+                hideAnswerBox(id); 
+                setStatus(id, "Ready"); 
                 
-                // 1. 获取用户在当前游戏输入框里设置的时间（如果获取不到则默认 30）
                 const timeInput = document.getElementById(`time-${id}`);
-                const userDuration = timeInput ? timeInput.value : 30;
+                const userDuration = timeInput ? timeInput.value : 180;
                 
-                // 2. 将倒计时显示区域（如 Time Up!）还原为用户输入的数值（例如 "3s"）
                 const timerEl = document.getElementById(`timer-${id}`);
                 if (timerEl) {
                     timerEl.textContent = `${userDuration}s`;
-                    timerEl.classList.remove("danger"); // 移除可能存在的红色警告样式
+                    timerEl.classList.remove("danger"); 
                 }
 
-                // 3. 清空游戏核心盘面，防止下次进来先看到旧题目
                 const arena = document.querySelector(`.arena-${id}`);
                 if (arena) arena.innerHTML = ''; 
             });
-            
-            // 特别清理接龙的内联答案组件
-            const oldChainAnswer = document.querySelector(".chain-answer-inline");
-            if (oldChainAnswer) oldChainAnswer.remove();
 
             switchView("view-hub");
         }
@@ -1400,7 +1296,7 @@
                     { badge: "2", text: "Next word must start with <strong>t</strong> → <strong>tree</strong>" },
                     { badge: "3", text: "Next word must start with <strong>e</strong> → <strong>egg</strong>" }
                 ],
-                tip: "Tip: the last letter of one word is always the first letter of the next. Beat the timer!"
+                tip: "Tip: the last letter of one word is always the first letter of the next. Quickly write your answers on paper!"
             },
             scramble: {
                 cls: "purple", icon: "🔀", title: "How to play Unscramble",
@@ -1412,7 +1308,7 @@
                     { badge: "letters", text: "l · a · p · p · e" },
                     { badge: "answer", text: "rearrange → <strong>apple</strong>" }
                 ],
-                tip: "Tip: look for common endings like -ed, -ing, -er."
+                tip: "Tip: look for common endings like -ed, -ing, -er. Quickly write your answers on paper!"
             },
             crossword: {
                 cls: "green", icon: "🧩", title: "How to play Crossword Blitz",
@@ -1424,7 +1320,7 @@
                     { badge: "given", text: "first letter <strong>b</strong>, then 5 more" },
                     { badge: "answer", text: "b-a-n-a-n-a → <strong>banana</strong>" }
                 ],
-                tip: "Tip: count the blanks first — the number of spaces tells you the word length."
+                tip: "Tip: count the blanks first — the number of spaces tells you the word length. Quickly write your answers on paper!"
             },
             visual: {
                 cls: "amber", icon: "👁️", title: "How to play Visual Feature Trap",
@@ -1436,7 +1332,7 @@
                     { badge: "given", text: "first letter <strong>a</strong> · 5 letters" },
                     { badge: "answer", text: "a-p-p-l-e → <strong>apple</strong>" }
                 ],
-                tip: "Tip: combine all the feature chips into one picture in your head, then name it."
+                tip: "Tip: combine all the feature chips into one picture in your head, then name it. Quickly write your answers on paper!"
             }
         };
 
@@ -1450,7 +1346,7 @@
                 </div>
             `).join("");
             document.getElementById("arena-" + gameId).innerHTML = `
-                <div class="guide-box ${g.cls}">
+                <div class="guide-box ${g.cls} read-only-display">
                     <div class="guide-header">
                         <span class="guide-icon">${g.icon}</span>
                         <h4>${g.title}</h4>
@@ -1464,13 +1360,18 @@
                     <div class="guide-tips"><span>How to win:</span> ${g.tip}</div>
                 </div>
             `;
+            showNoAnswerNotice(gameId);
+        }
+
+        function showNoAnswerNotice(gameId) {
+            const box = document.getElementById("answer-" + gameId);
+            if (!box) return;
+            box.innerHTML = `<div class="no-answer-guide-notice">${DEFAULT_NO_ANSWER_GUIDE}</div>`;
+            box.style.display = "block";
         }
 
         function hideAnswerBox(gameId) {
-            const box = document.getElementById("answer-" + gameId);
-            if (!box) return;
-            box.style.display = "none";
-            box.innerHTML = "";
+            showNoAnswerNotice(gameId);
         }
 
         function sanitizeDefinition(text) {
@@ -1541,8 +1442,6 @@
                     const response = await fetch(url, { signal: controller.signal });
                     if (!response.ok) continue;
                     const data = await response.json();
-                    
-                    // 修复核心：直接走全数组遍历验证，确保拿到的 fl 和 definition 属于同一个对象，不会产生错位
                     result = findFirstValidEntry(data);
                     if (result) break;
                 } catch (error) {
@@ -1556,19 +1455,16 @@
             return result;
         }
 
-        /* 核心修复点 1：把原本无视长度、直接使用 Promise.all 并发请求全部单词的漏洞，
-           改造成优雅的严格串行查词逻辑。只要获取到了期望的有效词，立刻中断，绝不产生无用多余请求！*/
         async function fetchFilteredEntriesParallel(words, desiredCount) {
             const clean = [...new Set(words.map((w) => String(w).trim().toLowerCase()))]
                 .filter((w) => isCleanWord(w));
             
             const selected = [];
-            // 使用串行 for 循环替代 Promise.all，有效避免高并发网络轰炸
             for (const word of clean) {
                 const entry = await fetchFilteredEntry(word);
                 if (entry) {
                     selected.push(entry);
-                    if (selected.length >= desiredCount) break; // 查够了立马熔断，后面不再发包
+                    if (selected.length >= desiredCount) break; 
                 }
             }
             return selected;
@@ -1625,7 +1521,7 @@
         }
 
         function renderLetters(chars) {
-            return `<div class="letter-bank">${chars.map((char) => `<span>${char}</span>`).join("")}</div>`;
+            return `<div class="letter-bank read-only-display">${chars.map((char) => `<span>${char}</span>`).join("")}</div>`;
         }
 
         function renderChainTiles(word, index, totalWords) {
@@ -1668,7 +1564,7 @@
                 tiles.push(`<span class="${className}">${char}</span>`);
             }
             return `
-                <div class="chain-word-block">
+                <div class="chain-word-block read-only-display">
                     <div class="chain-word-row">
                         ${tiles.join("")}
                         ${notes[index] ? `<span class="chain-row-note">${notes[index]}</span>` : ""}
@@ -1679,7 +1575,7 @@
 
         function renderChainBoard(entries) {
             return `
-                <div class="chain-stack">
+                <div class="chain-stack read-only-display">
                     ${entries.map((entry, index) => `
                         <div class="clue-item teal">
                             <div class="meta-line">word ${index + 1} · ${entry.fl}</div>
@@ -1691,13 +1587,10 @@
             `;
         }
 
-        /* 核心修复点 2：限制单次寻词时的候选词规模，不再一口气抽 30 个去碰运气。
-           结合 fetchFilteredEntriesParallel 的串行改造，实现“最少只请求 1 次 API”的精准命中。*/
         async function pickValidatedWordStartingWith(letter, usedWords = [], difficulty = 'easy') {
             const lower = String(letter || "").toLowerCase();
             if (!lower) return null;
 
-            // 缩减单次验证备选词数，从 30 缩减至更合理的 6 个
             const candidates = await getWordsByLetterAndDifficulty(lower, difficulty, 6);
             const filtered = candidates.filter(w => !usedWords.includes(w) && !isRecentlyUsed(w));
             
@@ -1745,7 +1638,6 @@
             return recentChainWords.includes(lower) || sessionUsedWords.has(lower);
         }
 
-        /* 核心修复点 3：限制链条生成的最大试错大循环次数（熔断机制），防止接口因网络断链或生僻字陷入无限盲目重试。*/
         async function getValidatedChainEntries(difficulty = 'easy') {
             const alphabet = 'abcdefghijklmnopqrstuvwxyz'.split('');
             const allowedAlpha = shuffle(alphabet).filter(l => !lastFirstLetters.slice(-3).includes(l));
@@ -1753,13 +1645,12 @@
             let firstEntry = null;
             let secondEntry = null;
             let thirdEntry = null;
-            let attemptLoopCount = 0; // 大循环试错限额计数器
+            let attemptLoopCount = 0; 
 
             for (const letter of allowedAlpha) {
                 attemptLoopCount++;
-                if (attemptLoopCount > 6) break; // 熔断：如果连续换了 6 个首字母都因为网络或字典定义问题断链，直接切入安全兜底，绝不死循环刷 API
+                if (attemptLoopCount > 6) break; 
 
-                // 每次大循环起始词验证，精简捞词量
                 const candidates = await getWordsByLetterAndDifficulty(letter, difficulty, 5);
                 const filtered = candidates.filter(w => !isRecentlyUsed(w));
                 const entries = await fetchFilteredEntriesParallel(filtered.length ? filtered : candidates, 1);
@@ -1782,7 +1673,6 @@
                 }
             }
 
-            // 终极降级安全保障：如果触发了上述熔断，或者字典网络彻底不通
             const fallbackPool = await fetchRandomWordPool(15, difficulty);
             const fallbackEntries = await fetchFilteredEntriesParallel(fallbackPool, 3);
             if(fallbackEntries.length >= 3) {
@@ -1796,12 +1686,9 @@
             return null;
         }
 
+        /* 修改：将 Chain 游戏的答案渲染方式与其他游戏统一，放入底部的 answer-chain 区域 */
         function showChainResult(entries) {
-            const arena = document.getElementById("arena-chain");
-            const chainText = entries.map((entry) => entry.word.toUpperCase()).join(" ➡️ ");
-            const oldAnswer = arena.querySelector(".chain-answer-inline");
-            if (oldAnswer) oldAnswer.remove();
-            arena.insertAdjacentHTML("beforeend", `<div class="chain-answer-inline">⏱️ Verified Chain: ${chainText}</div>`);
+            showInlineAnswers("chain", entries, "⏱️ Verified Chain");
         }
 
         function renderArena(gameId, items) {
@@ -1812,18 +1699,20 @@
             const box = document.getElementById("answer-" + gameId);
             if (!box) return;
             box.innerHTML = `
-                <h3>${title}</h3>
-                <div class="answer-list">
-                    ${entries.map((entry, index) => `
-                        <div class="answer-item">
-                            <div class="answer-head">
-                                <strong>Answer ${index + 1}</strong>
-                                <span class="tag">${entry.fl}</span>
+                <div class="read-only-display">
+                    <h3>${title}</h3>
+                    <div class="answer-list">
+                        ${entries.map((entry, index) => `
+                            <div class="answer-item">
+                                <div class="answer-head">
+                                    <strong>Answer ${index + 1}</strong>
+                                    <span class="tag">${entry.fl}</span>
+                                </div>
+                                ${renderLetters(entry.word.split(""))}
+                                ${entry.definition ? `<div class="answer-def">${entry.definition}</div>` : ""}
                             </div>
-                            ${renderLetters(entry.word.split(""))}
-                            ${entry.definition ? `<div class="answer-def">${entry.definition}</div>` : ""}
-                        </div>
-                    `).join("")}
+                        `).join("")}
+                    </div>
                 </div>
             `;
             box.style.display = "block";
@@ -1832,9 +1721,9 @@
         function showInlineAnswers(gameId, entries, title) {
             const box = document.getElementById("answer-" + gameId);
             if (!box) return;
-            const answerText = entries.map((entry) => entry.word.toUpperCase()).join("  •  ");
+            const answerText = entries.map((entry) => entry.word.toUpperCase()).join("  ➡️  ");
             box.innerHTML = `
-                <div class="answer-inline-row">
+                <div class="answer-inline-row read-only-display">
                     <div class="answer-inline-value">${title}: ${answerText}</div>
                 </div>
             `;
@@ -1910,7 +1799,7 @@
                 if (entries.length < 3) throw new Error("Not enough clean words");
 
                 renderArena("scramble", entries.map((entry, index) => `
-                    <div class="clue-item purple">
+                    <div class="clue-item purple read-only-display">
                         <div class="meta-line">clue ${index + 1} · ${entry.fl}</div>
                         <div class="clue-text">${entry.definition}</div>
                         ${renderLetters(toScrambleChars(entry.word))}
@@ -1957,13 +1846,15 @@
         }
 
         async function fetchRandomWordPool(size, difficulty = 'easy') {
+            const config = DIFFICULTY_CONFIG[difficulty] || DIFFICULTY_CONFIG.easy;
             const source = (typeof vocabulary !== 'undefined' && vocabulary[difficulty]) ? vocabulary[difficulty] : (vocabulary && vocabulary.easy) || [];
+            
             const pool = shuffle([...new Set(source)]).filter(
-                (w) => typeof w === 'string' && w.length >= 2 && w.length <= 12
+                (w) => typeof w === 'string' && w.length >= config.minLen && w.length <= config.maxLen
             );
             if (pool.length >= size) return pool.slice(0, size);
 
-            const fallback = shuffle(generalBank);
+            const fallback = shuffle(generalBank).filter((w) => w.length >= config.minLen && w.length <= config.maxLen);
             for (const word of fallback) {
                 if (pool.length >= size) break;
                 if (!pool.includes(word)) pool.push(word);
@@ -2014,7 +1905,7 @@
                 .join("");
 
             return `
-                <div class="clue-item amber">
+                <div class="clue-item amber read-only-display">
                     <div class="meta-line">feature trap · ${entry.fl}</div>
                     <div class="clue-title">Use these clues to find the hidden word.</div>
                     <div class="feature-chip-wrap">
@@ -2045,7 +1936,7 @@
                 if (entries.length < 3) throw new Error("Not enough clean words");
 
                 renderArena("crossword", entries.map((entry, index) => `
-                    <div class="clue-item green">
+                    <div class="clue-item green read-only-display">
                         <div class="meta-line">clue ${index + 1} · ${entry.fl} · ${entry.word.length} letters</div>
                         <div class="clue-text">${entry.definition}</div>
                         ${renderLetters(toMaskChars(entry.word))}
